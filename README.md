@@ -2,5 +2,5 @@
 
 Generate truth data for star trackers on the ground to test centroiding, identification, and Wahba's Problem solvers!
 
-Simulated Image with quaternion: [0.014, 0.233, 0.971, -0.051]; scalar last form; 5.5 magnitude threshold 
-![SimulatedImage](media/2023_12_05_18_44_27_0.014_0.233_0.971_-0.051.png)
+Simulated Image with quaternion: [-0.039, 0.304, 0.920, -0.243]; scalar last form; 4.5 magnitude threshold. The Big Dipper! 
+![SimulatedImage](media/2023_12_05_21_33_43_-0.039_0.304_0.920_-0.243.png)

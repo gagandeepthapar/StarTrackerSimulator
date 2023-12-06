@@ -21,7 +21,7 @@ from attitude import Attitude
 YBSC = "./YBSC.pkl"
 MEDIA_FOLDER = "media/"
 
-FOCAL_LENGTH = 3000  # pixels
+FOCAL_LENGTH = 2000  # pixels
 FOCAL_ARR_X = 1024  # pixels
 FOCAL_ARR_Y = 1024
 
@@ -96,14 +96,14 @@ class Simulator:
         # compute optimal lambda multiplier for centroids
         # Eq. 17-20 w/o hardware errors
         catalog["LAMBDA_STAR"] = catalog[["UVEC_BODY"]].apply(
-            lambda row: -FOCAL_LENGTH / row.UVEC_BODY[2], axis=1
+            lambda row: FOCAL_LENGTH / row.UVEC_BODY[2], axis=1
         )
 
         # get centroids
         # Eq. 17-20
         catalog["IMAGE_CENTROID"] = catalog[["UVEC_BODY", "LAMBDA_STAR"]].apply(
             lambda row: (
-                row.LAMBDA_STAR * row.UVEC_BODY + np.array([0, 0, FOCAL_LENGTH])
+                row.LAMBDA_STAR * row.UVEC_BODY - np.array([0, 0, FOCAL_LENGTH])
             )[0:2],
             axis=1,
         )
@@ -176,9 +176,14 @@ if __name__ == "__main__":
         np.random.uniform(0, 2 * np.pi),
     )
 
+    # Big dipper attitude
+    ra = np.pi / 180 * (12 + 15 / 60 + 25.56 / 3600 + 5)
+    dec = np.pi / 180 * (57 + 1 / 60 + 57.4156 / 3600 + 2)
+    roll = np.pi / 180 * -30
+
     """
     run simulator to get simulated data.
     This is what the star tracker would theoretically see!
     """
-    sim = Simulator(ra, dec, roll, 5.5)
+    sim = Simulator(ra, dec, roll, 4.5)
     sim.get_image(True, True)
