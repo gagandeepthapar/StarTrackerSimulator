@@ -2,9 +2,9 @@
 Star Tracker Simulator:
     Create simulations of images and test various parts of the star tracker operations
 
-Gagandeep Thapar
+ATTITUDE -> IMAGE
 
-Gagandeep.Thapar@millennium-space.com
+Gagandeep Thapar
 """
 
 import logging
@@ -51,7 +51,7 @@ class Simulator:
         self.boresight: np.ndarray = Attitude.ra_dec_to_uvec(self.ra, self.dec)
 
         # compute rotm from eci to body
-        self.R_body_eci = self.get_eci_to_body_rotm()
+        self.R_body_eci = Attitude.ra_dec_roll_to_rotm(self.ra, self.dec, self.roll)
 
         # compute true quat
         self.q_true = Attitude.rotm_to_quat(self.R_body_eci)
@@ -65,25 +65,6 @@ class Simulator:
         logger.debug(f"Boresight (Body): {np.array([0,0,1])}")
         logger.debug(f"Filtered Catalog:\n{self.filtered_catalog}")
 
-    def get_eci_to_body_rotm(self) -> np.ndarray:
-        """
-        Get rotation matrix to rotate eci vectors into body frame
-        """
-
-        zhat = self.boresight
-        xhat_pre = np.array(
-            [np.cos(self.ra - np.pi / 2), np.sin(self.ra - np.pi / 2), 0]
-        )
-        xhat = (
-            xhat_pre * np.cos(self.roll)
-            + np.cross(zhat, xhat_pre) * np.sin(self.roll)
-            + zhat * (zhat.dot(xhat_pre)) * (1 - np.cos(self.roll))
-        )
-        xhat = Attitude.unit(xhat)
-        yhat = Attitude.unit(np.cross(zhat, xhat))
-
-        return np.array([xhat, yhat, zhat])
-
     def filter_catalog(self) -> pd.DataFrame:
         """
         filter catalog to viewable stars
@@ -93,6 +74,7 @@ class Simulator:
         catalog = catalog[catalog.v_magnitude <= self.mag]
 
         # get unit vector for each star in catalog
+        # Eq. 32/33 in paper
         catalog["UVEC_ECI"] = catalog[["right_ascension", "declination"]].apply(
             lambda row: Attitude.ra_dec_to_uvec(row.right_ascension, row.declination),
             axis=1,
@@ -112,11 +94,13 @@ class Simulator:
         )
 
         # compute optimal lambda multiplier for centroids
+        # Eq. 17-20 w/o hardware errors
         catalog["LAMBDA_STAR"] = catalog[["UVEC_BODY"]].apply(
             lambda row: -FOCAL_LENGTH / row.UVEC_BODY[2], axis=1
         )
 
         # get centroids
+        # Eq. 17-20
         catalog["IMAGE_CENTROID"] = catalog[["UVEC_BODY", "LAMBDA_STAR"]].apply(
             lambda row: (
                 row.LAMBDA_STAR * row.UVEC_BODY + np.array([0, 0, FOCAL_LENGTH])
@@ -140,6 +124,7 @@ class Simulator:
         image = np.zeros((FOCAL_ARR_X, FOCAL_ARR_Y))
 
         for _, row in self.filtered_catalog.iterrows():
+            # center image about corner; make integers to index into matrix
             ctr = np.round(
                 row.IMAGE_CENTROID + np.array([FOCAL_ARR_X / 2, FOCAL_ARR_Y / 2])
             )
@@ -160,12 +145,14 @@ class Simulator:
 
             image[star_area_x, star_area_y] = 100
 
+        # plot figure
         fig = plt.figure()
         ax = fig.add_subplot()
         ax.imshow(image, cmap="gray")
         ax.axis("off")
 
         if save_flag:
+            # save image and associated data as csv
             now = datetime.now()
             dtnow = now.strftime("%Y_%m_%d_%H_%M_%S")
             quatstr = f"{self.q_true[0]:.3f}_{self.q_true[1]:.3f}_{self.q_true[2]:.3f}_{self.q_true[3]:.3f}"
@@ -175,6 +162,7 @@ class Simulator:
             self.filtered_catalog.to_csv(fname + ".csv")
 
         if show_flag:
+            # plot image
             plt.show()
 
         return

@@ -10,6 +10,10 @@ Includes:
     - Associated Quaternion (qTrue)
     - Associated rotation matrix (R_STAR)
 
+The "paper" referenced in the documentation refers to 
+"Stochastic Modeling of the Star Tracker Measurement Process to Assess 
+ Accuracy and Precision from Perturbation Propagation", Thapar et al.
+
 startrackermodel
 """
 
@@ -34,6 +38,7 @@ class Attitude:
     def ra_dec_to_uvec(right_asc: float, dec: float) -> np.ndarray:
         """
         Convert right ascension, declination into unit vector
+        Eq. 32/33 in paper
 
         Inputs:
             right_asc (float)  : Right Ascension [rad]
@@ -56,6 +61,7 @@ class Attitude:
     def ra_dec_roll_to_rotm(right_asc: float, dec: float, roll: float) -> np.ndarray:
         """
         Converts full attitude in 3-angle system to unique rotation matrix
+        Eq. 37-41 in paper
 
         Args:
             right_asc (float): Right Ascension [rad]
@@ -91,6 +97,7 @@ class Attitude:
         """
         Rodrigues' Rotation Formula to rotate vector u1 about axis ax through angle ang.
         Will enforce unit vector u1 and ax
+        Eq. 40 in paper
 
         Args:
             u1 (np.ndarray): vector to rotate
@@ -110,6 +117,7 @@ class Attitude:
     def rotm_to_quat(R: np.ndarray) -> np.ndarray:
         """
         Convert rotation matrix into quaternion
+        Eq. 45-50 in paper
 
         Inputs:
             R (np.ndarray): Rotation matrix from A to B
@@ -364,6 +372,7 @@ class Attitude:
     def quat_compare(q1: np.ndarray, q2: np.ndarray) -> float:
         """
         Compare 2 quaternions and return the angular error between them
+        Eq. 59-61 in paper
 
         Args:
             q1 (np.ndarray): q1
@@ -381,8 +390,7 @@ class Attitude:
         q2_q1_4 = q2[3] * q1_conj[3] - q1_conj[0:3].T @ q2[0:3]
         qdiff = Attitude.unit(np.array([*q2_q1_13, q2_q1_4]))
 
-        # return 2 * np.arccos(np.abs(qdiff[3]))
-        return 2 * np.arctan2(np.sqrt(qdiff[0:3].T @ qdiff[0:3]), qdiff[3])
+        return 2 * np.arccos(np.abs(qdiff[3]))
 
     @staticmethod
     def __opt_lam_f(
