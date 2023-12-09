@@ -19,9 +19,7 @@ startrackermodel
 
 import logging
 import logging.config
-from typing import List, Dict
 import numpy as np
-import pandas as pd
 
 from data import CONSTANTS
 

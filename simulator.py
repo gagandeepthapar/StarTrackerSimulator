@@ -158,7 +158,7 @@ class Simulator:
             quatstr = f"{self.q_true[0]:.3f}_{self.q_true[1]:.3f}_{self.q_true[2]:.3f}_{self.q_true[3]:.3f}"
 
             fname = MEDIA_FOLDER + dtnow + "_" + quatstr
-            plt.savefig(fname + ".png")
+            plt.savefig(fname + ".png", bbox_inches="tight", pad_inches=0)
             self.filtered_catalog.to_csv(fname + ".csv")
 
         if show_flag:
